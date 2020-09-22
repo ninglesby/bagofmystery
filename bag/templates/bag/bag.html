@@ -1,0 +1,17 @@
+<a href="{% url 'new_bag' %}">New Bag</a> <a href="{% url 'index' %}">Home</a>
+<h1>bag name: {{ bag.name }}</h1> 
+<h3>bag owner: {{bag.owner }}</h3>
+<form method="post">
+    {% csrf_token %}
+    <p>
+        <h3>Current Item</h3>
+        {{ bag.active_content.bag_content }}
+    </p>
+    <input type="submit" name="pull_item" value="Pull Item from Bag">
+    <br>
+    <label>New Item</label>
+    <br>
+    <textarea name="bag_item"></textarea>
+    <br>
+    <input type="submit" name="add_item" value="Add Item to Bag">
+</form>
