@@ -1,1 +1,1 @@
-web: gunicorn bagofmystery.wsgi
+web: gunicorn mysterybag.wsgi
