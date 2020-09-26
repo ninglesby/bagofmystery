@@ -12,6 +12,8 @@ from lazysignup.utils import is_lazy_user
 from lazysignup.signals import converted
 from lazysignup import constants
 from django.contrib.auth import get_user_model
+####MONKEYPATCH ADDITIONS
+from bag import word_generator
 DEFAULT_BLACKLIST = (
     'slurp',
     'googlebot',
@@ -71,9 +73,8 @@ class LazyUserManager(models.Manager):
         if m:
             return m()
         else:
-            max_length = user_class._meta.get_field(
-                self.username_field).max_length
-            return uuid.uuid4().hex[:max_length]
+            name= word_generator.get_words()
+            return name
 
 
 @six.python_2_unicode_compatible

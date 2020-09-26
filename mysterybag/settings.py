@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ['.herokuapp.com']
 # Application definition
 
 INSTALLED_APPS = [
+    'rest_framework',
     'bag.apps.BagConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -70,6 +71,14 @@ TEMPLATES = [
         },
     },
 ]
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ]
+}
 
 AUTHENTICATION_BACKENDS = (
   'django.contrib.auth.backends.ModelBackend',
@@ -129,6 +138,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
 
 ##Needed for heroku deployment
 django_heroku.settings(locals())

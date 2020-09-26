@@ -1,17 +1,167 @@
-<a href="{% url 'new_bag' %}">New Bag</a> <a href="{% url 'index' %}">Home</a>
-<h1>bag name: {{ bag.name }}</h1> 
-<h3>bag owner: {{bag.owner }}</h3>
-<form method="post">
-    {% csrf_token %}
-    <p>
-        <h3>Current Item</h3>
-        {{ bag.active_content.bag_content }}
+{% extends "base_generic.html" %}
+{% block title %}
+{{ bag.name }}
+{% endblock %}
+{% block nav %}
+    <nav class="nav nav-pills nav-justified">
+      <a class="btn btn-outline-primary mr-2" href="{% url 'index' %}">Home</a>
+      <a class="btn btn-outline-primary mr-2" href="{% url 'new_bag' %}">New Bag</a>
+      {% if request.user == bag.owner %}
+      <button type="button" class="btn btn-outline-primary mr-2" data-toggle="modal" data-target="#bagSettings">
+        Bag Settings
+      </button>
+      {% endif %}
+      <!--
+      <a class="nav-link" href="#">Link</a>
+      <a class="nav-link disabled" href="#">Disabled</a>
+      -->
+    </nav>
+{% endblock %}
+{% block content %}
+<h1>Bag: <span id=bag_name>{{ bag.name }}</span></h1>
+<h4>Owner: <span id=owner_name>{{ bag.owner }}</span></h4>
+<br>
+<div class="container">
+    <div class="row justify-content-center">
+      <div class="col-sm">
+        <h5><span id="availableItemCount" class="badge badge-pill badge-primary">0</span> Items in the bag.</h5>
+      </div>
+      <div class="col-sm">
+        <h5><span id="discardedItemCount" class="badge badge-pill badge-danger">0</span> Discarded items.</h5> 
+      </div>
+    </div>
+  </div>
+<div class="jumbotron">
+    <p class="lead" id="activeItemContent"></p>
+    <p class="lead">
+      <button class="btn btn-primary btn-lg" id="pullItem" role="button">Pull Item from Bag</button>
+      <button class="btn btn-danger btn-lg" id="discardItem" onclick="discardItem()" role="button">Discard Item</button>
     </p>
-    <input type="submit" name="pull_item" value="Pull Item from Bag">
-    <br>
-    <label>New Item</label>
-    <br>
-    <textarea name="bag_item"></textarea>
-    <br>
-    <input type="submit" name="add_item" value="Add Item to Bag">
-</form>
+  </div>
+  <div class="input-group">
+    <div class="input-group-prepend">
+        <button class="btn btn-outline-secondary" id="submitItemBtn" onclick="submitItem()" type="button">Submit Item</button>
+    </div>
+    <textarea class="form-control" id="submitText" aria-label="With textarea"></textarea>
+  </div>
+
+<!-- Modal -->
+    <div class="modal fade" id="bagSettings" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLongTitle">Bag Settings</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+            
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <!--
+                <button type="button" class="btn btn-primary">Save changes</button>
+            -->
+            <button type="button" onclick="emptyBag()" data-dismss="modal" class="btn btn-warning">Empty Bag</button>
+            <button type="button" onclick="deleteBag()" data-dismss="modal" class="btn btn-danger">Delete Bag</button>
+            </div>
+        </div>
+        </div>
+    </div>
+{% endblock %}
+{% block scripts %}
+
+    function receiveUpdate(msg) {
+        if (msg.active_content) {
+            $("#activeItemContent").text(msg.active_content.bag_content)
+            $("#pullItem").text("Put Item Back in Bag")
+            $("#pullItem").attr("onclick", "putItemBack()")
+        } else {
+            $("#activeItemContent").text("No Item Selected")
+            $("#pullItem").text("Pull Item from Bag")
+            $("#pullItem").attr("onclick", "pullItem()")
+        }
+
+        var activeItems = parseInt(Object.keys(msg.contents).length)
+        var discardedItems = parseInt(msg.discarded_count)
+        $("#availableItemCount").text((activeItems-discardedItems))
+        $("#discardedItemCount").text(discardedItems)
+    }
+    function update() {
+        $.ajax({
+            url:"{% url 'bag_contents' bag.name %}"
+        }).done(function(msg) {
+            receiveUpdate(msg)
+        });
+    }
+    
+    function submitItem() {
+        var data = {}
+        data.content = $("#submitText").val()
+        data.bag_name = "{{ bag.name }}"
+        data.owner = {{ request.user.id }}
+        $.post({
+            url:"{% url 'submit_item' %}",
+            data: data}).done( function() {
+                $("#submitText").val("")
+                var items = parseInt($("#availableItemCount").text())
+                $("#availableItemCount").text(items+1)
+        });
+    }
+
+    function pullItem() {
+        var data = {}
+        data.bag_name = "{{ bag.name }}"
+        $.post({
+            url:"{% url 'pull_item' %}", 
+            data: data,
+        }).done( function() {
+            update()
+        });
+    }
+    function putItemBack() {
+        var data = {}
+        data.bag_name = "{{ bag.name }}"
+        $.post({
+            url:"{% url 'put_item_back' %}", 
+            data: data,
+        }).done( function() {
+            update()
+        });
+    }
+    function discardItem() {
+        var data = {}
+        data.bag_name = "{{ bag.name }}"
+        $.post({
+            url:"{% url 'discard_item' %}", 
+            data: data,
+        }).done( function() {
+            update()
+        });
+    }
+    function emptyBag() {
+        var data = {}
+        data.bag_name = "{{ bag.name }}"
+        $.post({
+            url:"{% url 'empty_bag' %}", 
+            data: data,
+        }).done( function() {
+            update()
+        });
+    }
+    function deleteBag() {
+        var data = {}
+        data.bag_name = "{{ bag.name }}"
+        $.post({
+            url:"{% url 'delete_bag' %}", 
+            data: data,
+        }).done( function() {
+            window.location.href = "{% url 'index' %}"
+        });
+    }
+    update()
+    setInterval(function(){ update(); }, 5000)
+
+
+{% endblock %}
