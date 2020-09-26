@@ -18,8 +18,8 @@
     </nav>
 {% endblock %}
 {% block content %}
-<h1>Bag: <span id=bag_name>{{ bag.name }}</span></h1>
-<h4>Owner: <span id=owner_name>{{ bag.owner }}</span></h4>
+<h3>Bag: <span id=bag_name>{{ bag.name }}</span></h3>
+<h5>Owner: <span id=owner_name>{{ bag.owner }}</span></h5>
 <br>
 <div class="container">
     <div class="row justify-content-center">
@@ -34,11 +34,12 @@
 <div class="jumbotron">
     <p class="lead" id="activeItemContent"></p>
     <p class="lead">
-      <button class="btn btn-primary btn-lg" id="pullItem" role="button">Pull Item from Bag</button>
-      <button class="btn btn-danger btn-lg" id="discardItem" onclick="discardItem()" role="button">Discard Item</button>
+        <button class="btn btn-primary btn-lg" id="pullItem" role="button">Pull</button>
+        <button class="btn btn-danger btn-lg" id="discardItem" onclick="discardItem()" role="button">Discard</button>
     </p>
+
   </div>
-  <div class="input-group">
+  <div class="input-group mb-5">
     <div class="input-group-prepend">
         <button class="btn btn-outline-secondary" id="submitItemBtn" onclick="submitItem()" type="button">Submit Item</button>
     </div>
@@ -60,6 +61,7 @@
             </div>
             <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" onclick="restoreItems()" data-dismiss="modal">Restore Items</button>
             <!--
                 <button type="button" class="btn btn-primary">Save changes</button>
             -->
@@ -71,15 +73,32 @@
     </div>
 {% endblock %}
 {% block scripts %}
-
+    var img_item = '<img id="activeContentImg" src="[IMG_REPLACE]" class="img-fluid rounded mb-3" alt="Responsive image">'
+    function checkURL(url) {
+        return(url.match(/\.(jpeg|jpg|gif|png)$/) != null);
+    }
     function receiveUpdate(msg) {
         if (msg.active_content) {
-            $("#activeItemContent").text(msg.active_content.bag_content)
-            $("#pullItem").text("Put Item Back in Bag")
+            if (checkURL(msg.active_content.bag_content)) {
+                $("#activeItemContent").addClass("d-none")
+                var tmp_img = img_item.replace("[IMG_REPLACE]", msg.active_content.bag_content)
+                if ($("#activeContentImg").length) {
+                    $("#activeContentImg").replaceWith(tmp_img)
+                } else {
+                    $(tmp_img).insertAfter("#activeItemContent")
+                };
+            } else {
+                $("#activeItemContent").removeClass("d-none")
+                $("#activeItemContent").text(msg.active_content.bag_content)
+                $("#activeContentImg").remove()
+            };
+                $("#pullItem").text("Put Back")
             $("#pullItem").attr("onclick", "putItemBack()")
         } else {
+            $("#activeItemContent").removeClass("d-none")
+            $("#activeContentImg").remove()
             $("#activeItemContent").text("No Item Selected")
-            $("#pullItem").text("Pull Item from Bag")
+            $("#pullItem").text("Pull")
             $("#pullItem").attr("onclick", "pullItem()")
         }
 
@@ -145,6 +164,16 @@
         data.bag_name = "{{ bag.name }}"
         $.post({
             url:"{% url 'empty_bag' %}", 
+            data: data,
+        }).done( function() {
+            update()
+        });
+    }
+    function restoreItems() {
+        var data = {}
+        data.bag_name = "{{ bag.name }}"
+        $.post({
+            url:"{% url 'restore_items' %}", 
             data: data,
         }).done( function() {
             update()

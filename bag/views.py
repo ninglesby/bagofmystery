@@ -101,6 +101,17 @@ def empty_bag(request):
     except KeyError:
         return HttpResponse(status=500)
     return HttpResponse(status=200)
+@csrf_exempt
+def restore_items(request):
+    try:
+        bag = Bag.objects.get(name=request.POST['bag_name'])
+        if request.user == bag.owner:
+            bag.restore_items()
+        else:
+            return HttpResponse(status=403)
+    except KeyError:
+        return HttpResponse(status=500)
+    return HttpResponse(status=200)
 
 @csrf_exempt
 def delete_bag(request):

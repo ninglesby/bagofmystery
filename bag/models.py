@@ -40,6 +40,12 @@ class Bag(models.Model):
         self.put_item_back()
         for content in self.contents.all():
             content.delete()
+            
+    def restore_items(self):
+        for content in self.contents.all():
+            content.discarded = False
+            content.save()
+
     def __str__(self):
         return self.name
 
