@@ -5,4 +5,4 @@ Create a new bag and share the link with friends. Made for any type of game that
 
 demo at 
 
-[bagofmystery.com](bagofmystery.com)
+[bagofmystery.com](http://www.bagofmystery.com)
